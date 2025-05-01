@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import SidebarLink from './SidebarLink';
 
-const Sidebar = ({ navigate }) => {
+const Sidebar = ({ navigate, onLogout }) => {
+
   const [activeScreen, setActiveScreen] = useState('AdminDashboard');
 
   return (
@@ -48,10 +49,12 @@ const Sidebar = ({ navigate }) => {
       <SidebarLink 
         icon="sign-out-alt" 
         label="Logout" 
-        screen="LogoutScreen" 
+        screen="LoginScreen"  // This won’t be used, but required by props
         navigate={setActiveScreen} 
-        active={activeScreen === 'LogoutScreen'} 
-      />
+        active={false} 
+        onLogout={onLogout}  // ✅ Pass onLogout handler
+        />
+
     </ScrollView>
   );
 };

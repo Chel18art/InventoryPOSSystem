@@ -8,7 +8,6 @@ import TotalSalesScreen from '../screens/TotalSalesScreen';
 import TotalCategoriesScreen from '../screens/TotalCategoriesScreen';
 import TotalUsersScreen from '../screens/TotalUsersScreen';
 import CashierDashboard from '../screens/CashierDashboard'; // Optional
-import LogoutScreen from '../screens/LogoutScreen'; // Optional
 
 const LayoutWithSidebar = () => {
   const [activeScreen, setActiveScreen] = useState('AdminDashboard');
@@ -28,10 +27,8 @@ const LayoutWithSidebar = () => {
         return <TotalUsersScreen />;
       case 'CashierDashboard':
         return <CashierDashboard />;
-      case 'LogoutScreen':
-        return <LogoutScreen />;
       default:
-        return <AdminDashboard />;
+        return <AdminDashboard />; // fallback to default screen
     }
   };
 
@@ -55,7 +52,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f4f6f9', // Optional: Add a background color to the content
+    backgroundColor: '#f4f6f9',
   },
 });
 

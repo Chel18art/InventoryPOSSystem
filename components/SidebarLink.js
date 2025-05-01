@@ -1,14 +1,22 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';  // Import useNavigation
 
-const SidebarLink = ({ icon, label, screen, navigate, active }) => {
+const SidebarLink = ({ icon, label, screen, active }) => {
+  const navigation = useNavigation();  // Use navigation hook
+
   return (
-    <TouchableOpacity 
-      style={[styles.link, active && styles.activeLink]} 
-      onPress={() => navigate(screen)}
+    <TouchableOpacity
+      style={[styles.link, active && styles.activeLink]}
+      onPress={() => navigation.navigate(screen)}  // Use the hook to navigate
     >
-      <FontAwesome5 name={icon} size={18} color={active ? "#fff" : "#4e73df"} style={styles.icon} />
+      <FontAwesome5
+        name={icon}
+        size={18}
+        color={active ? "#fff" : "#4e73df"}
+        style={styles.icon}
+      />
       <Text style={[styles.label, active && styles.activeLabel]}>{label}</Text>
     </TouchableOpacity>
   );

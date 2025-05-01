@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // ✅ Base URL of your Django backend
-const BASE_URL = 'http://192.168.92.113:8000/api';
+const BASE_URL = 'http://192.168.229.113:8000/api';
 
 // ✅ Auth token management
 let authToken = null;

@@ -31,7 +31,8 @@ const AdminDashboardScreen = ({ navigation }) => {
     { icon: 'tags', label: 'Categories', screen: 'TotalCategories' },
     { icon: 'users', label: 'User Management', screen: 'TotalUsers' },
     { icon: 'users', label: 'Supplier', screen: 'SupplierScreen' },
-    { icon: 'sign-out-alt', label: 'Logout', screen: 'LogoutScreen' }
+    { icon: 'sign-out-alt', label: 'Logout', screen: 'logout' }
+
   ];
 
   useEffect(() => {

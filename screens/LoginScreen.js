@@ -1,41 +1,36 @@
-// LoginScreen.js
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = ({ navigation, onLogin }) => {  // Accept onLogin here
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleLogin = () => {
-    // Check if using localhost instead of 192.168.92.113 works
-    const apiUrl = 'http://127.0.0.1:8000/api/login/'; // Update this if needed
-  
+    const apiUrl = 'http://192.168.229.113:8000/api/login/'; // Use your LAN IP for physical devices
+
     axios
       .post(apiUrl, { username, password })
       .then((response) => {
-        console.log(response.data);  // Log the response to check if role and token are being returned correctly
-        
-  
         const { token, role } = response.data;
         const normalizedRole = role.toLowerCase();
 
         if (normalizedRole === 'admin') {
-        navigation.navigate('AdminDashboard');
+          onLogin(); // ✅ This sets isLoggedIn = true, and THEN Dashboard is available
         } else if (normalizedRole === 'cashier') {
-        navigation.navigate('CashierDashboard');
+          // You can handle the cashier route separately if needed
+          // For now just show an error if CashierDashboard is not implemented
+          setError('Cashier dashboard not implemented');
         } else {
-        setError('Invalid role');
+          setError('Invalid role');
         }
-
       })
       .catch((err) => {
-        console.log(err);  // Log the error to see what's going wrong
+        console.log(err);
         setError('Invalid credentials');
       });
   };
-  
 
   return (
     <View style={styles.container}>
