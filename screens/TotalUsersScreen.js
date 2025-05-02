@@ -203,6 +203,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
+    marginTop: 50,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',

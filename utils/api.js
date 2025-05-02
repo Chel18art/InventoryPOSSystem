@@ -1,9 +1,8 @@
 import axios from 'axios';
 
-// ✅ Base URL of your Django backend
-const BASE_URL = 'http://192.168.229.113:8000/api';
+// ✅ Set your backend IP here
+const BASE_URL = 'http://192.168.92.114:8000/api'; // <-- Update this if IP changes
 
-// ✅ Auth token management
 let authToken = null;
 
 // Set token
@@ -45,18 +44,29 @@ export const getInventoryItems = async () => {
     return response.data;
   } catch (error) {
     console.error('Error fetching items:', error);
-    alert('Error fetching items: ' + (error.response?.data?.detail || error.message));
+    alert('Error fetching inventory items.');
     return [];
   }
 };
 
-// ✅ TOTAL ITEMS
+// ✅ FETCH TOTAL ITEMS (returns count or list depending on backend)
 export const getTotalItems = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/total-items/`, {
+    const response = await axios.get(`${BASE_URL}/items/`, {
       headers: getHeaders(),
     });
-    return response.data.total_items;
+
+    const data = response.data;
+
+    // Handle both array and paginated result
+    if (Array.isArray(data)) {
+      return data.length;
+    } else if (data.count !== undefined) {
+      return data.count;
+    } else {
+      console.warn('Unexpected response format for total items:', data);
+      return 0;
+    }
   } catch (error) {
     console.error('Error fetching total items:', error);
     return 0;
@@ -76,7 +86,7 @@ export const getTotalSales = async () => {
   }
 };
 
-// ✅ DASHBOARD STATS (recommended API for dashboard)
+// ✅ DASHBOARD STATS
 export const getDashboardStats = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/dashboard/`, {
@@ -94,7 +104,36 @@ export const getDashboardStats = async () => {
   }
 };
 
-// ✅ REFRESH TOKEN (optional if using JWT refresh endpoint)
+// ✅ ADD ITEM
+export const addItem = async (formData) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/items/`, formData, {
+      headers: {
+        ...getHeaders(),
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error adding item:', error);
+    throw error;
+  }
+};
+
+// ✅ FETCH CATEGORIES
+export const getCategories = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/categories/`, {
+      headers: getHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return [];
+  }
+};
+
+// ✅ REFRESH TOKEN (JWT-based flow)
 export const refreshToken = async () => {
   try {
     const response = await axios.post(`${BASE_URL}/token/refresh/`, {
@@ -104,6 +143,19 @@ export const refreshToken = async () => {
     return response.data;
   } catch (error) {
     console.error('Error refreshing token:', error);
+    return null;
+  }
+};
+
+// ✅ GET ITEM DETAILS (optional)
+export const getItemDetails = async (itemId) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/items/${itemId}/`, {
+      headers: getHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching item ${itemId}:`, error);
     return null;
   }
 };

@@ -12,6 +12,7 @@ import {
 import { DataTable, Button, Card } from 'react-native-paper';
 import { FontAwesome5 } from '@expo/vector-icons';
 import Sidebar from '../components/Sidebar'; // Adjust the path if needed
+import { Picker } from '@react-native-picker/picker'; // ✅ Correct
 
 const periods = ['today', 'week', 'month', 'year'];
 
@@ -212,6 +213,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
+    marginTop: 50,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',

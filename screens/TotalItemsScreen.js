@@ -1,36 +1,63 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, Button, Image, ScrollView, TouchableOpacity, StyleSheet, Modal, Animated } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { Picker } from '@react-native-picker/picker';
-import { addItem } from '../utils/api';
-import { FontAwesome5 } from '@expo/vector-icons';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Modal,
+  Animated,
+  ScrollView,
+  FlatList,
+  TextInput,
+  Button,
+  Image,
+} from 'react-native';
+import Sidebar from '../components/Sidebar';
+import { getTotalItems } from '../utils/api';
+import { Picker } from '@react-native-picker/picker'; // ✅ Correct
 
-const AddItemScreen = ({ navigation }) => {
-  const [form, setForm] = useState({
-    name: '',
-    category: '',
-    description: '',
-    quantity: '',
-    price: '',
-    supplier: '',
-    unit: '',
-    image: null,
-  });
 
-  const [previewUri, setPreviewUri] = useState(null);
+
+
+const TotalItemsScreen = ({ navigation }) => {
+  const [items, setItems] = useState([]);  // Ensure items is initialized as an array
+  const [loading, setLoading] = useState(true);
   const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [category, setCategory] = useState('');
+  const [entries, setEntries] = useState('10');
   const slideAnim = useRef(new Animated.Value(-250)).current;
 
-  const sidebarLinks = [
-    { icon: 'tachometer-alt', label: 'Dashboard', screen: 'AdminDashboard' },
-    { icon: 'boxes', label: 'Inventory', screen: 'TotalItems' },
-    { icon: 'plus-circle', label: 'Add Item', screen: 'AddItemScreen' },
-    { icon: 'chart-line', label: 'Sales Report', screen: 'TotalSales' },
-    { icon: 'tags', label: 'Categories', screen: 'TotalCategories' },
-    { icon: 'users', label: 'User Management', screen: 'TotalUsers' },
-    { icon: 'users', label: 'Supplier', screen: 'SupplierScreen' },
-    { icon: 'sign-out-alt', label: 'Logout', screen: '' }
-  ];
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const data = await getTotalItems();  // Fetch the data from the API
+        console.log('API Response:', data);  // Log the raw response to check the format
+
+        // Check if data is an error status or number
+        if (typeof data === 'number') {
+          console.error(`Unexpected API response: ${data}`);
+          setItems([]);  // Clear items on error
+        } else if (Array.isArray(data)) {
+          setItems(data);  // If data is an array, update the state
+        } else if (data && data.items && Array.isArray(data.items)) {
+          // If the response is an object with a 'items' key containing an array
+          setItems(data.items);
+        } else {
+          console.error('Unexpected API response structure:', data);
+          setItems([]);  // Fallback to empty array if structure is not as expected
+        }
+      } catch (error) {
+        console.error('Error fetching items:', error);  // Log any errors that occur during the fetch
+        setItems([]);  // Fallback to empty array in case of fetch error
+      } finally {
+        setLoading(false);  // Stop loading animation
+      }
+    };
+
+    fetchItems();
+  }, []);  // Empty dependency array ensures this runs once when the component mounts
 
   const toggleSidebar = () => {
     if (!isSidebarVisible) {
@@ -47,7 +74,7 @@ const AddItemScreen = ({ navigation }) => {
     }
   };
 
-  const SidebarLink = ({ icon, label, screen }) => (
+  const SidebarLink = ({ label, screen }) => (
     <TouchableOpacity
       style={styles.sidebarLink}
       onPress={() => {
@@ -55,302 +82,182 @@ const AddItemScreen = ({ navigation }) => {
         navigation.navigate(screen);
       }}
     >
-      <FontAwesome5 name={icon} size={18} color="#fff" style={styles.sidebarIcon} />
       <Text style={styles.sidebarText}>{label}</Text>
     </TouchableOpacity>
   );
 
-  const handleInputChange = (field, value) => {
-    setForm({ ...form, [field]: value });
-  };
+  const filteredItems = Array.isArray(items)
+    ? items
+        .filter(item =>
+          item.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          (category ? item.category.id === category : true)
+        )
+        .slice(0, parseInt(entries))
+    : [];
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const image = result.assets[0];
-      setForm({ ...form, image });
-      setPreviewUri(image.uri);
-    }
-  };
-
-  const handleSubmit = async () => {
-    try {
-      const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => {
-        if (key === 'image' && value) {
-          formData.append('image', {
-            uri: value.uri,
-            name: 'item.jpg',
-            type: 'image/jpeg',
-          });
-        } else {
-          formData.append(key, String(value));
-        }
-      });
-
-      const response = await addItem(formData);
-      if (response) {
-        alert('Item added successfully!');
-        setForm({
-          name: '',
-          category: '',
-          description: '',
-          quantity: '',
-          price: '',
-          supplier: '',
-          unit: '',
-          image: null,
-        });
-        setPreviewUri(null);
-      }
-    } catch (error) {
-      console.error('Add item error:', error);
-      alert('Failed to add item.');
-    }
-  };
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#00796b" />
+        <Text style={styles.loadingText}>Loading Inventory Items...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Sidebar */}
+    <View style={styles.container}>
       <Modal visible={isSidebarVisible} transparent animationType="none">
         <TouchableOpacity style={styles.overlay} onPress={toggleSidebar} />
         <Animated.View style={[styles.sidebar, { transform: [{ translateX: slideAnim }] }]}>
-          {sidebarLinks.map((link, index) => (
-            <SidebarLink key={index} {...link} />
-          ))}
+          <SidebarLink label="Dashboard" screen="AdminDashboard" />
+          <SidebarLink label="Inventory" screen="TotalItems" />
+          <SidebarLink label="Add Item" screen="AddItemScreen" />
+          <SidebarLink label="Sales Report" screen="TotalSales" />
+          <SidebarLink label="Categories" screen="TotalCategories" />
+          <SidebarLink label="User Management" screen="TotalUsers" />
+          <SidebarLink label="Logout" screen="LogoutScreen" />
         </Animated.View>
       </Modal>
 
-      {/* Sidebar Toggle Button */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleSidebar}>
-          <FontAwesome5 name="bars" size={24} color="#4e73df" />
+          <Text style={styles.menuButton}>☰</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add New Item</Text>
+        <Text style={styles.headerTitle}>Inventory Items</Text>
       </View>
 
-      {/* Name and Category */}
-      <View style={styles.row}>
-        <View style={styles.inputGroup}>
-          <Text>Name</Text>
-          <TextInput
-            style={styles.input}
-            value={form.name}
-            onChangeText={(val) => handleInputChange('name', val)}
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        <View style={styles.controlsContainer}>
+          <View style={styles.entriesControl}>
+            <Text>Show</Text>
+            <Picker
+              selectedValue={entries}
+              style={styles.picker}
+              onValueChange={(itemValue) => setEntries(itemValue)}
+            >
+              <Picker.Item label="10" value="10" />
+              <Picker.Item label="25" value="25" />
+              <Picker.Item label="50" value="50" />
+              <Picker.Item label="100" value="100" />
+            </Picker>
+            <Text>entries</Text>
+          </View>
+          <View style={styles.searchForm}>
+            <Text>Search:</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search item..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            <Text>Category:</Text>
+            <Picker
+              selectedValue={category}
+              style={styles.picker}
+              onValueChange={(itemValue) => setCategory(itemValue)}
+            >
+              <Picker.Item label="All Categories" value="" />
+              {/* Populate with real category options when integrating */}
+            </Picker>
+          </View>
+        </View>
+
+        <View style={styles.tableContainer}>
+          <FlatList
+            data={filteredItems}
+            keyExtractor={(item, index) => index.toString()}
+            ListHeaderComponent={() => (
+              <View style={styles.tableHeader}>
+                <Text style={styles.tableHeaderCell}>#</Text>
+                <Text style={styles.tableHeaderCell}>Image</Text>
+                <Text style={styles.tableHeaderCell}>Name</Text>
+                <Text style={styles.tableHeaderCell}>Category</Text>
+                <Text style={styles.tableHeaderCell}>Description</Text>
+                <Text style={styles.tableHeaderCell}>Qty</Text>
+                <Text style={styles.tableHeaderCell}>Unit</Text>
+                <Text style={styles.tableHeaderCell}>Price</Text>
+                <Text style={styles.tableHeaderCell}>Supplier</Text>
+              </View>
+            )}
+            renderItem={({ item, index }) => (
+              <View
+                style={[styles.tableRow, item.quantity < 10 && styles.lowStock]}
+              >
+                <Text style={styles.tableCell}>{index + 1}</Text>
+                {item.image ? (
+                  <Image source={{ uri: item.image }} style={styles.itemImage} />
+                ) : (
+                  <Text style={styles.tableCell}>No image</Text>
+                )}
+                <Text style={styles.tableCell}>{item.name}</Text>
+                <Text style={styles.tableCell}>{item.category.name}</Text>
+                <Text style={styles.tableCell}>{item.description}</Text>
+                <Text style={styles.tableCell}>{item.quantity}</Text>
+                <Text style={styles.tableCell}>{item.unit}</Text>
+                <Text style={styles.tableCell}>{item.price}</Text>
+                <Text style={styles.tableCell}>{item.supplier.name}</Text>
+              </View>
+            )}
           />
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text>Category</Text>
-          <Picker
-            selectedValue={form.category}
-            style={styles.input}
-            onValueChange={(val) => handleInputChange('category', val)}>
-            <Picker.Item label="Select Category" value="" />
-            <Picker.Item label="Food" value="food" />
-            <Picker.Item label="Drinks" value="drinks" />
-          </Picker>
-        </View>
-      </View>
-
-      {/* Description */}
-      <View style={styles.inputGroup}>
-        <Text>Description</Text>
-        <TextInput
-          style={[styles.input, { height: 80 }]}
-          multiline
-          value={form.description}
-          onChangeText={(val) => handleInputChange('description', val)}
-        />
-      </View>
-
-      {/* Quantity and Price */}
-      <View style={styles.row}>
-        <View style={styles.inputGroup}>
-          <Text>Quantity</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
-            value={form.quantity}
-            onChangeText={(val) => handleInputChange('quantity', val)}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text>Price</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="decimal-pad"
-            value={form.price}
-            onChangeText={(val) => handleInputChange('price', val)}
-          />
-        </View>
-      </View>
-
-      {/* Supplier */}
-      <View style={styles.inputGroup}>
-        <Text>Supplier</Text>
-        <TextInput
-          style={styles.input}
-          value={form.supplier}
-          onChangeText={(val) => handleInputChange('supplier', val)}
-        />
-      </View>
-
-      {/* Unit */}
-      <View style={styles.inputGroup}>
-        <Text>Unit</Text>
-        <TextInput
-          style={styles.input}
-          value={form.unit}
-          onChangeText={(val) => handleInputChange('unit', val)}
-        />
-      </View>
-
-      {/* Image Upload */}
-      <View style={styles.inputGroup}>
-        <Text>Upload Image (Optional)</Text>
-        <Button title="Pick Image" onPress={pickImage} />
-        {previewUri && (
-          <Image source={{ uri: previewUri }} style={styles.imagePreview} />
-        )}
-      </View>
-
-      {/* Submit Button */}
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Add Item</Text>
-      </TouchableOpacity>
-
-      {/* Live Preview */}
-      <View style={styles.preview}>
-        <Text style={styles.previewTitle}>Live Preview</Text>
-        <Text><Text style={styles.bold}>Name:</Text> {form.name || '-'}</Text>
-        <Text><Text style={styles.bold}>Category:</Text> {form.category || '-'}</Text>
-        <Text><Text style={styles.bold}>Quantity:</Text> {form.quantity || '-'}</Text>
-        <Text><Text style={styles.bold}>Price:</Text> ${form.price || '-'}</Text>
-        <Text><Text style={styles.bold}>Unit:</Text> {form.unit || '-'}</Text>
-        <Text><Text style={styles.bold}>Supplier:</Text> {form.supplier || '-'}</Text>
-        {previewUri && <Image source={{ uri: previewUri }} style={styles.imagePreview} />}
-      </View>
-    </ScrollView>
+        <Text style={styles.totalCount}>Total items in inventory: {filteredItems.length}</Text>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    gap: 20,
-    backgroundColor: '#fff',
-  },
+  container: { flex: 1, backgroundColor: '#f0f4f8' },
   header: {
+    marginTop: 50,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
     padding: 15,
     borderBottomColor: '#ccc',
     borderBottomWidth: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 5,
     elevation: 5,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#4e73df',
-    marginLeft: 15,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 10,
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  inputGroup: {
-    flex: 1,
-    minWidth: 150,
-    marginBottom: 10,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    borderRadius: 6,
-    marginTop: 5,
-  },
-  button: {
-    backgroundColor: '#00796b',
-    padding: 14,
-    borderRadius: 8,
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  imagePreview: {
-    marginTop: 10,
-    width: '100%',
-    height: 200,
-    borderRadius: 10,
-  },
-  preview: {
-    marginTop: 30,
-    padding: 15,
-    backgroundColor: '#f4f4f4',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  previewTitle: {
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  bold: {
-    fontWeight: 'bold',
-  },
+  menuButton: { fontSize: 30, color: '#00796b' },
+  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#00796b', marginLeft: 15 },
+  contentContainer: { padding: 20 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 20, fontSize: 18, color: '#00796b' },
   sidebar: {
     position: 'absolute',
     top: 0,
     left: 0,
     width: 250,
     height: '100%',
-    backgroundColor: '#4e73df',
+    backgroundColor: '#00796b',
     paddingTop: 60,
     paddingHorizontal: 20,
     zIndex: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowOffset: { width: -4, height: 0 },
-    shadowRadius: 6,
   },
-  sidebarLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  sidebarIcon: {
-    marginRight: 15,
-  },
-  sidebarText: {
-    color: '#fff',
-    fontSize: 16,
-  },
+  sidebarLink: { marginBottom: 20 },
+  sidebarText: { color: '#fff', fontSize: 18 },
   overlay: {
     position: 'absolute',
     top: 0,
     left: 250,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
+  controlsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 20, marginBottom: 20 },
+  entriesControl: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  searchForm: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  searchInput: { borderWidth: 1, borderColor: '#ccc', borderRadius: 6, padding: 8, width: 120 },
+  picker: { height: 40, width: 120 },
+  tableContainer: { borderWidth: 1, borderColor: '#ddd', borderRadius: 6 },
+  tableHeader: { flexDirection: 'row', backgroundColor: '#00796b', padding: 10 },
+  tableHeaderCell: { flex: 1, color: '#fff', fontWeight: 'bold', textAlign: 'center' },
+  tableRow: { flexDirection: 'row', padding: 10, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  tableCell: { flex: 1, textAlign: 'center', color: '#333' },
+  itemImage: { width: 40, height: 40, borderRadius: 4 },
+  lowStock: { backgroundColor: '#ffeb3b' },
+  totalCount: { marginTop: 20, fontSize: 16, color: '#333' },
 });
 
-export default AddItemScreen;
+export default TotalItemsScreen;

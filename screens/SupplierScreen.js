@@ -83,6 +83,7 @@ const SupplierScreen = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   header: {
+    marginTop: 50,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',

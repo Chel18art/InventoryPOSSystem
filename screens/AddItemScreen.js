@@ -239,6 +239,7 @@
         backgroundColor: '#f1f5f9',
     },
     header: {
+        marginTop: 50,
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#fff',
