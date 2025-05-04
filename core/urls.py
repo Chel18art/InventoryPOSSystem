@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 from django.contrib.auth import views as auth_views
 from django.conf import settings
@@ -7,10 +7,22 @@ from .views import LoginView  # This should match the class name exactly
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .views import user_info
 from .views import DashboardStatsView
+from .views import ItemListView, ItemDetailView
+
+from rest_framework.routers import DefaultRouter
+from .views import CategoryViewSet
+from .views import SalesReportView
+from .views import get_users
+from .views import get_suppliers
+
+
+router = DefaultRouter()
+router.register(r'categories', CategoryViewSet)
 
 urlpatterns = [
     # Regular views
     path('', views.homepage, name='homepage'),
+    path('api/', include(router.urls)),
     path('admin_dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('cashier_pos/', views.cashier_pos, name='cashier_pos'),
     path('login/', views.user_login, name='user_login'),
@@ -45,11 +57,19 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/user/', user_info),
     
-    # Dashboard Stats API - Fix the URL here
-    path('api/dashboard/', DashboardStatsView.as_view(), name='dashboard-stats'),  # Use .as_view() for class-based view
+    # Dashboard Stats API
+    path('api/dashboard/', DashboardStatsView.as_view(), name='dashboard-stats'),
     path('dashboard-stats/', DashboardStatsView.as_view(), name='dashboard-stats'),  # Optional, if you need this route
+    path('api/items/', ItemListView.as_view(), name='item-list'),
+    path('api/items/<int:pk>/', ItemDetailView.as_view(), name='item-detail'),
 
-]
+    path('api/users/', get_users, name='get_users'),
+    path('api/suppliers/', get_suppliers, name='get_suppliers'),
+    
+    
+    # This should just be the function-based view
+    path('api/sales_report/', SalesReportView.as_view(), name='sales_report'),]
+
 
 # Serve static and media files during development
 if settings.DEBUG:

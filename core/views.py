@@ -8,9 +8,16 @@ from .forms import UserForm, ItemForm
 from django.http import JsonResponse
 import datetime
 import json
+from .serializer import CategorySerializer
+from rest_framework import viewsets
 from django.contrib import messages
 from .models import UserProfile
 from rest_framework.authtoken.models import Token
+from rest_framework import generics
+from .serializer import ItemSerializer  # Import the serializer
+from .serializer import SalesReportSerializer
+from .models import Supplier  # Ensure the correct file name is used
+
 
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -197,46 +204,55 @@ def inventory_management(request):
     }
     return render(request, 'inventory_management.html', context)
 
-@login_required
-def bulk_delete_items(request):
-    selected_ids = request.POST.getlist('selected_items')
-    if selected_ids:
-        Item.objects.filter(id__in=selected_ids).delete()
-        messages.success(request, f"{len(selected_ids)} items deleted successfully.")
-    else:
-        messages.warning(request, "No items selected for deletion.")
-    return redirect('inventory_management')
 
-@login_required
+
+@api_view(['GET'])
 def sales_report(request):
-    period = request.GET.get('period', 'today').lower()  # Ensure the period is in lowercase
-    
-    today = datetime.now().date()  # Get today's date correctly
+    period = request.GET.get('period', 'today')
+    from_date = request.GET.get('from_date')
+    to_date = request.GET.get('to_date')
 
-    # Filter sales based on the selected period
-    if period == 'today':
-        sales_data = Sale.objects.filter(date=today)
-    elif period == 'week':
-        start_of_week = today - timedelta(days=today.weekday())  # Get the start of the current week (Monday)
-        sales_data = Sale.objects.filter(date__gte=start_of_week)
-    elif period == 'month':
-        sales_data = Sale.objects.filter(date__month=today.month, date__year=today.year)
-    elif period == 'year':
-        sales_data = Sale.objects.filter(date__year=today.year)
+    today = timezone.now().date()
+    start_date = end_date = today
+
+    if from_date and to_date:
+        try:
+            start_date = datetime.strptime(from_date, '%Y-%m-%d').date()
+            end_date = datetime.strptime(to_date, '%Y-%m-%d').date()
+        except ValueError:
+            start_date = end_date = today
     else:
-        sales_data = Sale.objects.all()  # Fallback for any unexpected 'period' value
-    
-    # Calculate the total sales
-    total_sales = sum(sale.total_price for sale in sales_data)
+        if period == 'today':
+            selected_period = 'Today'
+        elif period == 'week':
+            start_date = today - timedelta(days=today.weekday())
+            selected_period = 'This Week'
+        elif period == 'month':
+            start_date = today.replace(day=1)
+            selected_period = 'This Month'
+        elif period == 'year':
+            start_date = today.replace(month=1, day=1)
+            selected_period = 'This Year'
+        else:
+            selected_period = 'Today'
 
-    # Render the report page with the selected period, sales data, and total sales
-    return render(request, 'sales_report.html', {
-        'selected_period': period.capitalize(),  # Capitalize the period for display
-        'sales_data': sales_data,
+    # Filter sales data
+    sales_data = Sale.objects.filter(date__range=[start_date, end_date]).order_by('-date')
+
+    # Calculate total sales
+    total_sales = sum(item.subtotal for sale in sales_data for item in sale.items.all())
+
+    # Response data
+    response_data = {
         'total_sales': total_sales,
-        'today': today.strftime('%Y-%m-%d'),
-    })
+        'selected_period': selected_period,
+        'sales_data': [
+            {'id': sale.id, 'date': sale.date, 'total': sum(item.subtotal for item in sale.items.all())}
+            for sale in sales_data
+        ],
+    }
 
+    return JsonResponse(response_data)
 
 
 def add_item(request):
@@ -578,9 +594,19 @@ def download_sales_report(request):
     # Get today's date
     today = datetime.now().date()
 
-    # Based on the period selected, filter sales
+    # Retrieve the period and date range from the request
     period = request.GET.get('period', 'today').lower()
+    from_date = request.GET.get('from_date')
+    to_date = request.GET.get('to_date')
 
+    # Parse the custom date range if provided
+    if from_date and to_date:
+        from_date = datetime.strptime(from_date, '%Y-%m-%d').date()
+        to_date = datetime.strptime(to_date, '%Y-%m-%d').date()
+    else:
+        from_date = to_date = None
+
+    # Filter sales based on the selected period and date range
     if period == 'today':
         sales = Sale.objects.filter(date=today)
         period_display = "Today's Sales"
@@ -594,6 +620,9 @@ def download_sales_report(request):
     elif period == 'year':
         sales = Sale.objects.filter(date__year=today.year)
         period_display = "This Year's Sales"
+    elif from_date and to_date:
+        sales = Sale.objects.filter(date__gte=from_date, date__lte=to_date)
+        period_display = f"Sales from {from_date} to {to_date}"
     else:
         sales = Sale.objects.all()
         period_display = "All Sales"
@@ -795,3 +824,63 @@ class DashboardStatsView(APIView):
         }
         
         return Response(data, status=status.HTTP_200_OK)
+    
+# List view - for GET all and POST new
+class ItemListView(generics.ListCreateAPIView):
+    queryset = Item.objects.all()
+    serializer_class = ItemSerializer
+
+# Detail view - for GET single, PUT, DELETE
+class ItemDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Item.objects.all()
+    serializer_class = ItemSerializer
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+
+class SalesReportView(APIView):
+    def get(self, request, *args, **kwargs):
+        # Logic for generating sales report
+        period = request.query_params.get('period')
+        from_date = request.query_params.get('from_date')
+        to_date = request.query_params.get('to_date')
+
+        # Filter sales data based on the parameters
+        sales = Sale.objects.filter(date__range=[from_date, to_date])  # Example, adjust logic as needed
+        
+        # Serialize the sales data
+        serializer = SalesReportSerializer(sales, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def get_users(request):
+    users = User.objects.all().select_related('userprofile')
+    user_data = [
+        {
+            'id': user.id,
+            'username': user.username,
+            'account_type': user.userprofile.account_type,
+            'date_joined': user.date_joined.strftime('%Y-%m-%d %H:%M'),
+        }
+        for user in users
+    ]
+    return Response(user_data)
+
+@api_view(['GET'])
+def get_suppliers(request):
+    suppliers = Supplier.objects.all()
+    supplier_data = [
+        {
+            'id': supplier.id,
+            'name': supplier.name,
+            'contact_person': supplier.contact_person,
+            'phone': supplier.phone,
+            'email': supplier.email,
+            'address': supplier.address,
+            'company': supplier.company,
+        }
+        for supplier in suppliers
+    ]
+    return Response(supplier_data)
