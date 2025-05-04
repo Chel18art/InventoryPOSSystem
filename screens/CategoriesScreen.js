@@ -2,20 +2,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Alert, StyleSheet, ScrollView, Modal, Animated } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 
-const TotalCategoriesScreen = ({ navigation }) => {
+const API_URL = 'http://192.168.87.113:8000/api/categories/'; // Replace with your actual backend URL
+
+const CategoriesScreen = ({ navigation }) => {
   const [categoryName, setCategoryName] = useState('');
   const [categories, setCategories] = useState([]);
-  const [idCounter, setIdCounter] = useState(1); // Simulate unique IDs
   const [isSidebarVisible, setSidebarVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(-250)).current;
 
   const sidebarLinks = [
     { icon: 'tachometer-alt', label: 'Dashboard', screen: 'AdminDashboard' },
-    { icon: 'boxes', label: 'Inventory', screen: 'TotalItems' },
-    { icon: 'plus-circle', label: 'Add Item', screen: 'AddItemScreen' },
-    { icon: 'chart-line', label: 'Sales Report', screen: 'TotalSales' },
-    { icon: 'tags', label: 'Categories', screen: 'TotalCategories' },
-    { icon: 'users', label: 'User Management', screen: 'TotalUsers' },
+    { icon: 'boxes', label: 'Inventory', screen: 'Inventory_management' },
+    { icon: 'chart-line', label: 'Sales Report', screen: 'Sales' },
+    { icon: 'tags', label: 'Categories', screen: 'Categories' },
+    { icon: 'users', label: 'User Management', screen: 'User_management' },
     { icon: 'users', label: 'Supplier', screen: 'SupplierScreen' },
     { icon: 'sign-out-alt', label: 'Logout', screen: '' }
   ];
@@ -40,7 +40,7 @@ const TotalCategoriesScreen = ({ navigation }) => {
       style={styles.sidebarLink}
       onPress={() => {
         toggleSidebar();
-        navigation.navigate(screen);
+        if (screen) navigation.navigate(screen);
       }}
     >
       <FontAwesome5 name={icon} size={18} color="#fff" style={styles.sidebarIcon} />
@@ -48,23 +48,65 @@ const TotalCategoriesScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
-  const addCategory = () => {
-    if (!categoryName.trim()) return;
-    const newCategory = {
-      id: idCounter,
-      name: categoryName,
-    };
-    setCategories([newCategory, ...categories]);
-    setIdCounter(idCounter + 1);
-    setCategoryName('');
+  // ✅ Fetch categories from backend
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
   };
 
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // ✅ Add category via API
+  const addCategory = async () => {
+    if (!categoryName.trim()) return;
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: categoryName }),
+      });
+
+      if (response.ok) {
+        setCategoryName('');
+        fetchCategories(); // Refresh list
+      } else {
+        console.error('Failed to add category');
+      }
+    } catch (error) {
+      console.error('Error adding category:', error);
+    }
+  };
+
+  // ✅ Delete category via API
   const deleteCategory = (id) => {
     Alert.alert('Confirm Delete', 'Are you sure you want to delete this category?', [
       { text: 'Cancel' },
       {
         text: 'Delete',
-        onPress: () => setCategories(categories.filter(cat => cat.id !== id)),
+        onPress: async () => {
+          try {
+            const response = await fetch(`${API_URL}${id}/`, {
+              method: 'DELETE',
+            });
+
+            if (response.ok) {
+              fetchCategories(); // Refresh list
+            } else {
+              console.error('Failed to delete category');
+            }
+          } catch (error) {
+            console.error('Error deleting category:', error);
+          }
+        },
         style: 'destructive',
       },
     ]);
@@ -292,4 +334,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TotalCategoriesScreen;
+export default CategoriesScreen;

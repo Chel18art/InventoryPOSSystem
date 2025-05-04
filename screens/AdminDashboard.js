@@ -25,14 +25,12 @@ const AdminDashboardScreen = ({ navigation }) => {
 
   const sidebarLinks = [
     { icon: 'tachometer-alt', label: 'Dashboard', screen: 'AdminDashboard' },
-    { icon: 'boxes', label: 'Inventory', screen: 'TotalItems' },
-    { icon: 'plus-circle', label: 'Add Item', screen: 'AddItemScreen' },
-    { icon: 'chart-line', label: 'Sales Report', screen: 'TotalSales' },
-    { icon: 'tags', label: 'Categories', screen: 'TotalCategories' },
-    { icon: 'users', label: 'User Management', screen: 'TotalUsers' },
+    { icon: 'boxes', label: 'Inventory', screen: 'Inventory_management' },
+    { icon: 'chart-line', label: 'Sales Report', screen: 'Sales' },
+    { icon: 'tags', label: 'Categories', screen: 'Categories' },
+    { icon: 'users', label: 'User Management', screen: 'User_management' },
     { icon: 'users', label: 'Supplier', screen: 'SupplierScreen' },
     { icon: 'sign-out-alt', label: 'Logout', screen: 'logout' }
-
   ];
 
   useEffect(() => {
@@ -108,7 +106,7 @@ const AdminDashboardScreen = ({ navigation }) => {
         <View style={styles.statsGrid}>
           <TouchableOpacity
             style={[styles.statCard, styles.gradientPurple]}
-            onPress={() => navigation.navigate('TotalItems')}
+            onPress={() => navigation.navigate('Inventory_management')}
           >
             <FontAwesome5 name="box" size={30} color="#fff" style={styles.icon} />
             <Text style={styles.cardTitle}>Total Items</Text>
@@ -117,7 +115,7 @@ const AdminDashboardScreen = ({ navigation }) => {
 
           <TouchableOpacity
             style={[styles.statCard, styles.gradientGreen]}
-            onPress={() => navigation.navigate('TotalSales')}
+            onPress={() => navigation.navigate('Sales')}
           >
             <FontAwesome5 name="dollar-sign" size={30} color="#fff" style={styles.icon} />
             <Text style={styles.cardTitle}>Total Sales</Text>
@@ -126,7 +124,7 @@ const AdminDashboardScreen = ({ navigation }) => {
 
           <TouchableOpacity
             style={[styles.statCard, styles.gradientOrange]}
-            onPress={() => navigation.navigate('TotalCategories')}
+            onPress={() => navigation.navigate('Categories')}
           >
             <FontAwesome5 name="tags" size={30} color="#fff" style={styles.icon} />
             <Text style={styles.cardTitle}>Total Categories</Text>
@@ -135,7 +133,7 @@ const AdminDashboardScreen = ({ navigation }) => {
 
           <TouchableOpacity
             style={[styles.statCard, styles.gradientLime]}
-            onPress={() => navigation.navigate('TotalUsers')}
+            onPress={() => navigation.navigate('User_management')}
           >
             <FontAwesome5 name="users" size={30} color="#fff" style={styles.icon} />
             <Text style={styles.cardTitle}>Total Users</Text>

@@ -1,83 +1,78 @@
-import React, { useState } from 'react';
-import { ScrollView, View, StyleSheet } from 'react-native';
-import SidebarLink from './SidebarLink';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome5';
+import { useNavigation } from '@react-navigation/native';
 
-const Sidebar = ({ navigate, onLogout }) => {
+const menuItems = [
+  { icon: 'tachometer-alt', label: 'Dashboard', screen: 'AdminDashboard' },
+  { icon: 'boxes', label: 'Inventory', screen: 'Inventory_management' },
+  { icon: 'chart-line', label: 'Sales Report', screen: 'Sales' },
+  { icon: 'tags', label: 'Categories', screen: 'Categories' },
+  { icon: 'users', label: 'User Management', screen: 'User_management' },
+  { icon: 'users', label: 'Supplier', screen: 'SupplierScreen' },
+  { icon: 'sign-out-alt', label: 'Logout', screen: 'Login' }
+];
 
-  const [activeScreen, setActiveScreen] = useState('AdminDashboard');
+const Sidebar = () => {
+  const navigation = useNavigation();
+
+  const handlePress = (screen) => {
+    if (screen === 'logout') {
+      navigation.navigate('Login');
+    } else {
+      navigation.navigate(screen);
+    }
+  };
 
   return (
-    <ScrollView style={styles.sidebar}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Inventory System</Text>
-      </View>
-      <SidebarLink 
-        icon="tachometer-alt" 
-        label="Dashboard" 
-        screen="AdminDashboard" 
-        navigate={setActiveScreen} 
-        active={activeScreen === 'AdminDashboard'} 
-      />
-      <SidebarLink 
-        icon="boxes" 
-        label="Total Items" 
-        screen="TotalItems" 
-        navigate={setActiveScreen} 
-        active={activeScreen === 'TotalItems'} 
-      />
-      <SidebarLink 
-        icon="chart-line" 
-        label="Total Sales" 
-        screen="TotalSales" 
-        navigate={setActiveScreen} 
-        active={activeScreen === 'TotalSales'} 
-      />
-      <SidebarLink 
-        icon="tags" 
-        label="Total Categories" 
-        screen="TotalCategories" 
-        navigate={setActiveScreen} 
-        active={activeScreen === 'TotalCategories'} 
-      />
-      <SidebarLink 
-        icon="users" 
-        label="Total Users" 
-        screen="TotalUsers" 
-        navigate={setActiveScreen} 
-        active={activeScreen === 'TotalUsers'} 
-      />
-      <SidebarLink 
-        icon="sign-out-alt" 
-        label="Logout" 
-        screen="LoginScreen"  // This won’t be used, but required by props
-        navigate={setActiveScreen} 
-        active={false} 
-        onLogout={onLogout}  // ✅ Pass onLogout handler
-        />
-
-    </ScrollView>
+    <View style={styles.sidebar}>
+      {menuItems.map((item, index) => (
+        <TouchableOpacity
+          key={index}
+          style={styles.sidebarItem}
+          onPress={() => handlePress(item.screen)}
+        >
+          <Icon name={item.icon} size={22} color="#fff" />
+          <Text style={styles.sidebarLabel}>{item.label}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   sidebar: {
-    flex: 1,
-    width: 250,
-    backgroundColor: '#4e73df',
-    paddingTop: 40,
-    paddingHorizontal: 20,
+    width: 260,
+    backgroundColor: 'transparent', // transparent so gradient works
+    paddingVertical: 20,
+    paddingLeft: 15,
+    paddingRight: 10,
+    justifyContent: 'flex-start',
+    flexDirection: 'column',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 8,
+    background: 'linear-gradient(to bottom, #4e8ef7, #007bb5)', // gradient background
+    borderRadius: 10,  // rounded corners for smooth edges
   },
-  header: {
-    marginBottom: 20,
+  sidebarItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#fff',
+    paddingVertical: 15,
+    paddingLeft: 15,
+    paddingRight: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    backgroundColor: '#007bb5', // Slightly lighter than the background
+    borderWidth: 1,
+    borderColor: '#006b95',
   },
-  headerText: {
-    fontSize: 22,
-    fontWeight: 'bold',
+  sidebarLabel: {
     color: '#fff',
+    marginLeft: 15,
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
 

@@ -8,7 +8,7 @@ const LoginScreen = ({ navigation, onLogin }) => {  // Accept onLogin here
   const [error, setError] = useState('');
 
   const handleLogin = () => {
-    const apiUrl = 'http://192.168.92.114:8000/api/login/'; // Use your LAN IP for physical devices
+    const apiUrl = 'http://192.168.87.113:8000/api/login/'; // Use your LAN IP for physical devices
 
     axios
       .post(apiUrl, { username, password })
@@ -18,10 +18,7 @@ const LoginScreen = ({ navigation, onLogin }) => {  // Accept onLogin here
 
         if (normalizedRole === 'admin') {
           onLogin(); // ✅ This sets isLoggedIn = true, and THEN Dashboard is available
-        } else if (normalizedRole === 'cashier') {
-          // You can handle the cashier route separately if needed
-          // For now just show an error if CashierDashboard is not implemented
-          setError('Cashier dashboard not implemented');
+
         } else {
           setError('Invalid role');
         }

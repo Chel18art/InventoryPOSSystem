@@ -11,10 +11,10 @@ const CustomDrawerContent = ({ navigation, onLogout }) => {
       </View>
 
       <SidebarLink icon="tachometer-alt" label="Dashboard" screen="AdminDashboard" navigate={navigation.navigate} />
-      <SidebarLink icon="boxes" label="Total Items" screen="TotalItems" navigate={navigation.navigate} />
-      <SidebarLink icon="chart-line" label="Total Sales" screen="TotalSales" navigate={navigation.navigate} />
-      <SidebarLink icon="tags" label="Total Categories" screen="TotalCategories" navigate={navigation.navigate} />
-      <SidebarLink icon="users" label="Total Users" screen="TotalUsers" navigate={navigation.navigate} />
+      <SidebarLink icon="boxes" label="Total Items" screen="Inventory_management" navigate={navigation.navigate} />
+      <SidebarLink icon="chart-line" label="Total Sales" screen="Sales" navigate={navigation.navigate} />
+      <SidebarLink icon="tags" label="Total Categories" screen="Categories" navigate={navigation.navigate} />
+      <SidebarLink icon="users" label="Total Users" screen="User_management" navigate={navigation.navigate} />
 
       {/* Logout button */}
       <TouchableOpacity onPress={onLogout} style={styles.logoutButton}>

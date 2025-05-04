@@ -1,5 +1,4 @@
-// screens/SupplierScreen.js
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,20 +6,24 @@ import {
   StyleSheet,
   Modal,
   Animated,
+  FlatList,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { getSuppliers } from '../utils/api'; // Make sure this endpoint is correct
 
 const SupplierScreen = ({ navigation }) => {
   const [isSidebarVisible, setSidebarVisible] = useState(false);
+  const [suppliers, setSuppliers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const slideAnim = useRef(new Animated.Value(-250)).current;
 
   const sidebarLinks = [
     { icon: 'tachometer-alt', label: 'Dashboard', screen: 'AdminDashboard' },
-    { icon: 'boxes', label: 'Inventory', screen: 'TotalItems' },
-    { icon: 'plus-circle', label: 'Add Item', screen: 'AddItemScreen' },
-    { icon: 'chart-line', label: 'Sales Report', screen: 'TotalSales' },
-    { icon: 'tags', label: 'Categories', screen: 'TotalCategories' },
-    { icon: 'users', label: 'User Management', screen: 'TotalUsers' },
+    { icon: 'boxes', label: 'Inventory', screen: 'Inventory_management' },
+    { icon: 'chart-line', label: 'Sales Report', screen: 'Sales' },
+    { icon: 'tags', label: 'Categories', screen: 'Categories' },
+    { icon: 'users', label: 'User Management', screen: 'User_management' },
     { icon: 'users', label: 'Supplier', screen: 'SupplierScreen' },
     { icon: 'sign-out-alt', label: 'Logout', screen: '' },
   ];
@@ -39,6 +42,26 @@ const SupplierScreen = ({ navigation }) => {
       }).start(() => setSidebarVisible(false));
     }
   };
+
+  const fetchSuppliers = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await getSuppliers();
+      setSuppliers(data);
+    } catch (err) {
+      console.error('API Error:', err?.response?.data || err.message);
+      setError(
+        err?.response?.data?.message || 'Failed to load suppliers. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
 
   const SidebarLink = ({ icon, label, screen }) => (
     <TouchableOpacity
@@ -75,7 +98,29 @@ const SupplierScreen = ({ navigation }) => {
 
       {/* Content */}
       <View style={styles.content}>
-        <Text style={styles.text}>Supplier Screen</Text>
+        <Text style={styles.text}>List of Suppliers</Text>
+
+        {loading && <Text>Loading...</Text>}
+        {error && <Text style={{ color: 'red' }}>{error}</Text>}
+
+        {!loading && !error && (
+          <FlatList
+          data={suppliers}
+          keyExtractor={(item, index) => (item?.id ? item.id.toString() : index.toString())}
+          renderItem={({ item }) => (
+            <View style={styles.supplierCard}>
+              <Text style={styles.supplierName}>{item.name}</Text>
+              <Text style={styles.supplierDetails}>Contact Person: {item.contact_person}</Text>
+              <Text style={styles.supplierDetails}>Phone: {item.phone}</Text>
+              <Text style={styles.supplierDetails}>Email: {item.email}</Text>
+              <Text style={styles.supplierDetails}>Address: {item.address}</Text>
+              <Text style={styles.supplierDetails}>Company: {item.company}</Text>
+            </View>
+          )}
+          
+        />
+        
+        )}
       </View>
     </View>
   );
@@ -107,10 +152,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f0f4f8',
+    padding: 10,
   },
   text: {
     fontSize: 18,
     color: '#333',
+    marginBottom: 20,
   },
   sidebar: {
     position: 'absolute',
@@ -146,6 +193,28 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  supplierCard: {
+    backgroundColor: '#fff',
+    padding: 15,
+    marginVertical: 10,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 5,
+    elevation: 5,
+    width: '100%',
+  },
+  supplierName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  supplierDetails: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 5,
   },
 });
 

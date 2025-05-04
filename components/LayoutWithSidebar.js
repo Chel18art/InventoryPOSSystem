@@ -3,11 +3,10 @@ import { View, StyleSheet } from 'react-native';
 import Sidebar from './Sidebar';
 
 import AdminDashboard from '../screens/AdminDashboard';
-import TotalItemsScreen from '../screens/TotalItemsScreen';
-import TotalSalesScreen from '../screens/TotalSalesScreen';
-import TotalCategoriesScreen from '../screens/TotalCategoriesScreen';
-import TotalUsersScreen from '../screens/TotalUsersScreen';
-import CashierDashboard from '../screens/CashierDashboard'; // Optional
+import Inventory_managementScreen from '../screens/Inventory_managementScreen';
+import SalesScreen from '../screens/SalesScreen';
+import CategoriesScreen from '../screens/CategoriesScreen';
+import User_managementScreen from '../screens/UsersScreen';
 
 const LayoutWithSidebar = () => {
   const [activeScreen, setActiveScreen] = useState('AdminDashboard');
@@ -17,16 +16,14 @@ const LayoutWithSidebar = () => {
     switch (activeScreen) {
       case 'AdminDashboard':
         return <AdminDashboard />;
-      case 'TotalItems':
-        return <TotalItemsScreen />;
-      case 'TotalSales':
-        return <TotalSalesScreen />;
-      case 'TotalCategories':
-        return <TotalCategoriesScreen />;
-      case 'TotalUsers':
-        return <TotalUsersScreen />;
-      case 'CashierDashboard':
-        return <CashierDashboard />;
+      case 'Inventory_management':
+        return <Inventory_managementScreen />;
+      case 'Sales':
+        return <SalesScreen />;
+      case 'Categories':
+        return <CategoriesScreen />;
+      case 'User_management':
+        return <User_managementScreen />;
       default:
         return <AdminDashboard />; // fallback to default screen
     }

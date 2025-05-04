@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // ✅ Set your backend IP here
-const BASE_URL = 'http://192.168.92.114:8000/api'; // <-- Update this if IP changes
+const BASE_URL = 'http://192.168.87.113:8000/api'; // <-- Update this if IP changes
 
 let authToken = null;
 
@@ -35,7 +35,25 @@ export const handleLogin = async (username, password) => {
   }
 };
 
-// ✅ FETCH INVENTORY ITEMS
+// ✅ FETCH SALES REPORT
+export const getSalesReport = async (period, from_date = null, to_date = null) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/sales_report/`, {
+      params: {
+        period,      // e.g., 'today', 'week', 'month', 'year', or custom date range
+        from_date,   // Starting date (required for custom range)
+        to_date,     // Ending date (required for custom range)
+      },
+      headers: getHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching sales data:', error);
+    throw error;
+  }
+};
+
+// ✅ GET INVENTORY ITEMS
 export const getInventoryItems = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/items/`, {
@@ -43,8 +61,9 @@ export const getInventoryItems = async () => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching items:', error);
-    alert('Error fetching inventory items.');
+    const message = error.response?.data?.detail || 'Error fetching inventory items.';
+    console.error(message);
+    alert(message);
     return [];
   }
 };
@@ -68,20 +87,7 @@ export const getTotalItems = async () => {
       return 0;
     }
   } catch (error) {
-    console.error('Error fetching total items:', error);
-    return 0;
-  }
-};
-
-// ✅ TOTAL SALES
-export const getTotalSales = async () => {
-  try {
-    const response = await axios.get(`${BASE_URL}/total-sales/`, {
-      headers: getHeaders(),
-    });
-    return response.data.total_sales;
-  } catch (error) {
-    console.error('Error fetching total sales:', error);
+    console.error('Error fetching total items:', error.response?.data?.detail || error.message);
     return 0;
   }
 };
@@ -94,29 +100,13 @@ export const getDashboardStats = async () => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
+    console.error('Error fetching dashboard stats:', error.response?.data?.detail || error.message);
     return {
       total_items: 0,
       total_sales: 0,
       total_categories: 0,
       total_users: 0,
     };
-  }
-};
-
-// ✅ ADD ITEM
-export const addItem = async (formData) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/items/`, formData, {
-      headers: {
-        ...getHeaders(),
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error adding item:', error);
-    throw error;
   }
 };
 
@@ -128,21 +118,27 @@ export const getCategories = async () => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    console.error('Error fetching categories:', error.response?.data?.detail || error.message);
     return [];
   }
 };
 
 // ✅ REFRESH TOKEN (JWT-based flow)
 export const refreshToken = async () => {
+  const token = getAuthToken();
+  if (!token) {
+    console.warn('No token available to refresh.');
+    return null;
+  }
+
   try {
     const response = await axios.post(`${BASE_URL}/token/refresh/`, {
-      token: getAuthToken(),
+      token: token,
     });
     setAuthToken(response.data.token);
     return response.data;
   } catch (error) {
-    console.error('Error refreshing token:', error);
+    console.error('Error refreshing token:', error.response?.data?.detail || error.message);
     return null;
   }
 };
@@ -155,7 +151,33 @@ export const getItemDetails = async (itemId) => {
     });
     return response.data;
   } catch (error) {
-    console.error(`Error fetching item ${itemId}:`, error);
+    console.error(`Error fetching item ${itemId}:`, error.response?.data?.detail || error.message);
     return null;
+  }
+};
+
+
+// ✅ FETCH USERS
+export const getUsers = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/users/`, {
+      headers: getHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching users:', error.response?.data?.detail || error.message);
+    return [];
+  }
+};
+
+
+  
+export const getSuppliers = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/api/suppliers/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching suppliers:', error.response?.data?.detail || error.message);
+    return [];
   }
 };

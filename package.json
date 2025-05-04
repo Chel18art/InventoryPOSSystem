@@ -15,15 +15,27 @@
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@react-native-async-storage/async-storage": "^2.1.2",
+    "@react-native-community/blur": "^4.4.1",
+    "@react-native-community/datetimepicker": "8.2.0",
     "@react-native-community/masked-view": "^0.1.11",
-    "@react-native-picker/picker": "2.9.0",
+    "@react-native-picker/picker": "^2.9.0",
     "@react-navigation/drawer": "^7.3.9",
     "@react-navigation/native": "^7.1.6",
     "@react-navigation/stack": "^7.2.10",
     "axios": "^1.9.0",
+    "bootstrap": "^5.3.5",
+    "date-fns": "^4.1.0",
+    "docxtemplater": "^3.61.1",
     "expo": "~52.0.46",
+    "expo-datepicker": "^1.0.23",
+    "expo-file-system": "~18.0.12",
     "expo-image-picker": "~16.0.6",
+    "expo-media-library": "~17.0.6",
+    "expo-sharing": "~13.0.1",
     "expo-status-bar": "~2.0.1",
+    "express": "^5.1.0",
+    "fs": "^0.0.1-security",
+    "pdfkit": "^0.17.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.9",
@@ -32,6 +44,7 @@
     "react-native-reanimated": "~3.16.1",
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "^4.10.0",
+    "react-native-toast-message": "^2.3.0",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
     "react-router-native": "^6.30.0"
@@ -39,5 +52,9 @@
   "devDependencies": {
     "@babel/core": "^7.20.0"
   },
-  "private": true
+  "private": true,
+  "keywords": [],
+  "author": "",
+  "type": "commonjs",
+  "description": ""
 }

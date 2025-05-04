@@ -6,11 +6,10 @@ import { NavigationContainer } from '@react-navigation/native';
 // Screens
 import LoginScreen from './screens/LoginScreen';
 import AdminDashboard from './screens/AdminDashboard';
-import TotalItems from './screens/TotalItemsScreen';
-import TotalSales from './screens/TotalSalesScreen';
-import TotalCategories from './screens/TotalCategoriesScreen';
-import TotalUsers from './screens/TotalUsersScreen';
-import AddItemScreen from './screens/AddItemScreen';
+import Inventory_management from './screens/Inventory_managementScreen';
+import Sales from './screens/SalesScreen';
+import Categories from './screens/CategoriesScreen';
+import User_management from './screens/UsersScreen';
 import SupplierScreen from './screens/SupplierScreen';
 
 // Drawer
@@ -27,11 +26,10 @@ const DrawerNavigator = ({ onLogout }) => (
     screenOptions={{ headerShown: false }}
   >
     <Drawer.Screen name="AdminDashboard" component={AdminDashboard} />
-    <Drawer.Screen name="TotalItems" component={TotalItems} />
-    <Drawer.Screen name="TotalSales" component={TotalSales} />
-    <Drawer.Screen name="TotalCategories" component={TotalCategories} />
-    <Drawer.Screen name="TotalUsers" component={TotalUsers} />
-    <Drawer.Screen name="AddItemScreen" component={AddItemScreen} />
+    <Drawer.Screen name="Inventory_management" component={Inventory_management} />
+    <Drawer.Screen name="Sales" component={Sales} />
+    <Drawer.Screen name="Categories" component={Categories} />
+    <Drawer.Screen name="User_management" component={User_management} />
     <Drawer.Screen name="SupplierScreen" component={SupplierScreen} />
   </Drawer.Navigator>
 );
