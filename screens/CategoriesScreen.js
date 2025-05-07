@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, Alert, StyleSheet, ScrollView, Modal, Animated } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 
-const API_URL = 'http://192.168.87.113:8000/api/categories/'; // Replace with your actual backend URL
+const API_URL = 'http://192.168.239.113:8000/api/categories/'; // Replace with your actual backend URL
 
 const CategoriesScreen = ({ navigation }) => {
   const [categoryName, setCategoryName] = useState('');

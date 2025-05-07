@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // ✅ Set your backend IP here
-const BASE_URL = 'http://192.168.87.113:8000/api'; // <-- Update this if IP changes
+const BASE_URL = 'http://192.168.239.113:8000/api'; // <-- Update this if IP changes
 
 let authToken = null;
 

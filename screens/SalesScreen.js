@@ -1,3 +1,4 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -39,31 +40,32 @@ const SalesScreen = () => {
 
   const getDateRange = (period) => {
     const today = new Date();
-    let fromDate, toDate;
+    let from, to;
 
     switch (period) {
       case 'today':
-        fromDate = toDate = today;
+        from = to = new Date(today);
         break;
       case 'week': {
-        const startOfWeek = today.getDate() - today.getDay();
-        fromDate = new Date(today.setDate(startOfWeek));
-        toDate = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        from = startOfWeek;
+        to = new Date(today);
         break;
       }
       case 'month':
-        fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        toDate = new Date();
+        from = new Date(today.getFullYear(), today.getMonth(), 1);
+        to = new Date(today);
         break;
       case 'year':
-        fromDate = new Date(today.getFullYear(), 0, 1);
-        toDate = new Date();
+        from = new Date(today.getFullYear(), 0, 1);
+        to = new Date(today);
         break;
       default:
-        return [today, today];
+        from = to = new Date(today);
     }
 
-    return [fromDate, toDate];
+    return [from, to];
   };
 
   const handlePeriodSelect = (period) => {
@@ -75,28 +77,28 @@ const SalesScreen = () => {
 
   const downloadReport = async (format) => {
     if (format !== 'docx') return;
-  
-    const url = `http://192.168.87.113:8000/sales/download?start_date=${formatDate(fromDate)}&end_date=${formatDate(toDate)}&format=${format}`;
+
+    const url = `http://192.168.239.113:8000/sales/download?start_date=${formatDate(fromDate)}&end_date=${formatDate(toDate)}&format=${format}`;
     const fileName = `sales_report_${formatDate(fromDate)}_to_${formatDate(toDate)}.${format}`;
     const fileUri = FileSystem.documentDirectory + fileName;
-  
+
     try {
       const { granted } = await MediaLibrary.requestPermissionsAsync();
       if (!granted) {
         Alert.alert("Permission Denied", "Cannot save file without permission.");
         return;
       }
-  
+
       const downloadResumable = FileSystem.createDownloadResumable(url, fileUri);
       const downloadResult = await downloadResumable.downloadAsync();
-  
+
       if (!downloadResult || !downloadResult.uri) {
         throw new Error('File download failed or URI is invalid.');
       }
-  
+
       const asset = await MediaLibrary.createAssetAsync(downloadResult.uri);
       await MediaLibrary.createAlbumAsync('Download', asset, false);
-  
+
       Alert.alert("Download Complete", `Saved to Downloads as ${fileName}`);
     } catch (error) {
       console.error("Download failed:", error);
@@ -106,9 +108,9 @@ const SalesScreen = () => {
       );
     }
   };
-  
 
   useEffect(() => {
+    // Only fetch once on mount
     fetchSales(fromDate, toDate);
   }, []);
 
@@ -120,12 +122,7 @@ const SalesScreen = () => {
         {['today', 'week', 'month', 'year'].map((period) => (
           <Pressable key={period} style={styles.periodButton} onPress={() => handlePeriodSelect(period)}>
             <Text style={styles.periodButtonText}>
-              {{
-                today: "Today",
-                week: "This Week",
-                month: "This Month",
-                year: "This Year",
-              }[period]}
+              {({ today: "Today", week: "This Week", month: "This Month", year: "This Year" })[period]}
             </Text>
           </Pressable>
         ))}
@@ -143,7 +140,6 @@ const SalesScreen = () => {
         </Pressable>
       </View>
 
-      {/* Download Button for DOCX only */}
       <View style={styles.downloadButtons}>
         <Pressable style={styles.loadButton} onPress={() => downloadReport('docx')}>
           <Text style={styles.loadButtonText}>Download DOCX</Text>
@@ -157,9 +153,7 @@ const SalesScreen = () => {
           display="default"
           onChange={(event, selectedDate) => {
             setShowFromPicker(false);
-            if (selectedDate) {
-              setFromDate(selectedDate);
-            }
+            if (selectedDate) setFromDate(selectedDate);
           }}
         />
       )}
@@ -171,47 +165,38 @@ const SalesScreen = () => {
           display="default"
           onChange={(event, selectedDate) => {
             setShowToPicker(false);
-            if (selectedDate) {
-              setToDate(selectedDate);
-            }
+            if (selectedDate) setToDate(selectedDate);
           }}
         />
       )}
 
-      {(() => {
-        if (loading) {
-          return (
-            <View style={styles.centered}>
-              <ActivityIndicator size="large" color="#008585" />
-              <Text style={styles.loadingText}>Loading sales data...</Text>
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#008585" />
+          <Text style={styles.loadingText}>Loading sales data...</Text>
+        </View>
+      ) : salesData.length === 0 ? (
+        <View style={styles.centered}>
+          <Text style={styles.noDataText}>No sales data available</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={salesData}
+          keyExtractor={(item, index) => item?.id?.toString() || index.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.item}>
+              <Text style={styles.itemText}>Date: {item.date}</Text>
+              <Text style={styles.itemText}>Total: ₱{item.total_price}</Text>
             </View>
-          );
-        } else if (salesData.length === 0) {
-          return (
-            <View style={styles.centered}>
-              <Text style={styles.noDataText}>No sales data available</Text>
-            </View>
-          );
-        } else {
-          return (
-            <FlatList
-              data={salesData}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <View style={styles.item}>
-                  <Text style={styles.itemText}>Date: {item.date}</Text>
-                  <Text style={styles.itemText}>Total: ₱{item.total_price}</Text>
-                </View>
-              )}
-            />
-          );
-        }
-      })()}
+          )}
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  // same styles as before...
   container: {
     flex: 1,
     padding: 20,

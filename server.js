@@ -93,5 +93,5 @@ app.get('/sales/download', (req, res) => {
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server is running on http://192.168.87.113:${port}`);
+  console.log(`Server is running on http://192.168.239.113:${port}`);
 });
