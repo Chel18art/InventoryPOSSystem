@@ -68,7 +68,7 @@ urlpatterns = [
     
     
     # This should just be the function-based view
-    path('api/sales_report/', SalesReportView.as_view(), name='sales_report'),]
+    path('api/sales-report/', SalesReportView.as_view(), name='sales-report'),]
 
 
 # Serve static and media files during development

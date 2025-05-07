@@ -47,6 +47,7 @@ from django.contrib.auth import authenticate
 from .serializer import UserSerializer
 
 
+
 def logout_view(request):
     logout(request)
     return redirect('user_login')
@@ -205,8 +206,6 @@ def inventory_management(request):
     return render(request, 'inventory_management.html', context)
 
 
-
-@api_view(['GET'])
 def sales_report(request):
     period = request.GET.get('period', 'today')
     from_date = request.GET.get('from_date')
@@ -214,17 +213,17 @@ def sales_report(request):
 
     today = timezone.now().date()
     start_date = end_date = today
+    selected_period = 'Today'
 
     if from_date and to_date:
         try:
             start_date = datetime.strptime(from_date, '%Y-%m-%d').date()
             end_date = datetime.strptime(to_date, '%Y-%m-%d').date()
+            selected_period = f'{start_date} to {end_date}'
         except ValueError:
-            start_date = end_date = today
+            pass
     else:
-        if period == 'today':
-            selected_period = 'Today'
-        elif period == 'week':
+        if period == 'week':
             start_date = today - timedelta(days=today.weekday())
             selected_period = 'This Week'
         elif period == 'month':
@@ -233,26 +232,18 @@ def sales_report(request):
         elif period == 'year':
             start_date = today.replace(month=1, day=1)
             selected_period = 'This Year'
-        else:
-            selected_period = 'Today'
 
-    # Filter sales data
+    # Fetch sales
     sales_data = Sale.objects.filter(date__range=[start_date, end_date]).order_by('-date')
-
-    # Calculate total sales
     total_sales = sum(item.subtotal for sale in sales_data for item in sale.items.all())
 
-    # Response data
-    response_data = {
+    context = {
         'total_sales': total_sales,
         'selected_period': selected_period,
-        'sales_data': [
-            {'id': sale.id, 'date': sale.date, 'total': sum(item.subtotal for item in sale.items.all())}
-            for sale in sales_data
-        ],
+        'sales_data': sales_data,
     }
 
-    return JsonResponse(response_data)
+    return render(request, 'sales_report.html', context)
 
 
 def add_item(request):
@@ -839,17 +830,33 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
-
 class SalesReportView(APIView):
     def get(self, request, *args, **kwargs):
-        # Logic for generating sales report
-        period = request.query_params.get('period')
-        from_date = request.query_params.get('from_date')
-        to_date = request.query_params.get('to_date')
+        # Retrieve query parameters
+        from_date_str = request.query_params.get('from_date')
+        to_date_str = request.query_params.get('to_date')
 
-        # Filter sales data based on the parameters
-        sales = Sale.objects.filter(date__range=[from_date, to_date])  # Example, adjust logic as needed
-        
+        # Validate date input
+        if not from_date_str or not to_date_str:
+            return Response({'error': 'Both from_date and to_date are required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Parse the dates
+        try:
+            from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
+            to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
+        except ValueError:
+            return Response({'error': 'Invalid date format. Use YYYY-MM-DD.'},
+                             status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if from_date is later than to_date
+        if from_date > to_date:
+            return Response({'error': 'from_date cannot be after to_date.'},
+                             status=status.HTTP_400_BAD_REQUEST)
+
+        # Filter sales data based on the date range
+        sales = Sale.objects.filter(date__range=[from_date, to_date]).order_by('-date')
+
         # Serialize the sales data
         serializer = SalesReportSerializer(sales, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
