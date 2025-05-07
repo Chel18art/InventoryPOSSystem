@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // ✅ Set your backend IP here
-const BASE_URL = 'http://192.168.239.113:8000/api'; // <-- Update this if IP changes
+const BASE_URL = 'http://192.168.87.113:8000/api'; // <-- Update this if IP changes
 
 let authToken = null;
 
@@ -38,7 +38,7 @@ export const handleLogin = async (username, password) => {
 // ✅ FETCH SALES REPORT
 export const getSalesReport = async (period, from_date = null, to_date = null) => {
   try {
-    const response = await axios.get(`${BASE_URL}/sales_report/`, {
+    const response = await axios.get(`${BASE_URL}/sales-report/`, {
       params: {
         period,      // e.g., 'today', 'week', 'month', 'year', or custom date range
         from_date,   // Starting date (required for custom range)
@@ -174,7 +174,7 @@ export const getUsers = async () => {
   
 export const getSuppliers = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/api/suppliers/`);
+    const response = await axios.get(`${BASE_URL}/suppliers/`);
     return response.data;
   } catch (error) {
     console.error('Error fetching suppliers:', error.response?.data?.detail || error.message);

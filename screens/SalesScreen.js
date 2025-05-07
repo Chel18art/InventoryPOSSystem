@@ -78,7 +78,7 @@ const SalesScreen = () => {
   const downloadReport = async (format) => {
     if (format !== 'docx') return;
 
-    const url = `http://192.168.239.113:8000/sales/download?start_date=${formatDate(fromDate)}&end_date=${formatDate(toDate)}&format=${format}`;
+    const url = `http://192.168.87.113:8000/sales/download?start_date=${formatDate(fromDate)}&end_date=${formatDate(toDate)}&format=${format}`;
     const fileName = `sales_report_${formatDate(fromDate)}_to_${formatDate(toDate)}.${format}`;
     const fileUri = FileSystem.documentDirectory + fileName;
 
